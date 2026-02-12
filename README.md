@@ -1,7 +1,7 @@
 # Image Dehazing (Traditional)
 
 This project provides a classic, training-free image dehazing pipeline based on the Dark Channel Prior,
-plus a simple Tkinter UI to browse a folder, preview the input/output, and save results.
+plus a Tkinter GUI for image preview, metric comparison, and chart export.
 
 ## Setup
 
@@ -16,6 +16,20 @@ pip install -r requirements.txt
 ```bash
 python app.py
 ```
+
+## GUI Workflow
+
+1. Choose an image folder and load an image.
+2. Click `Run Dehaze` to generate output.
+3. Open the `Metrics` tab to view:
+   - grouped bar chart (input vs dehazed),
+   - radar chart (normalized profile),
+   - numeric table for four metrics:
+     - Tenengrad
+     - Laplacian Variance
+     - Entropy
+     - RMS Contrast
+4. Click `Export Metric Charts` to save paper-ready PNG figures.
 
 ## Notes
 
