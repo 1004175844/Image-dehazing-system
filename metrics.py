@@ -8,6 +8,13 @@ METRIC_ORDER = (
     "Entropy",
     "RMS Contrast",
 )
+# 界面显示用中文名
+METRIC_DISPLAY = {
+    "Tenengrad": "特南格拉斯梯度",
+    "Laplacian Var": "拉普拉斯方差",
+    "Entropy": "熵",
+    "RMS Contrast": "RMS 对比度",
+}
 
 
 def _validate_images(input_bgr, output_bgr):
@@ -77,7 +84,7 @@ def calculate_metrics(input_bgr, output_bgr):
         ratio = (delta / (abs(before) + 1e-12)) * 100.0
         rows.append(
             {
-                "name": name,
+                "name": METRIC_DISPLAY.get(name, name),
                 "input": before,
                 "output": after,
                 "delta": delta,

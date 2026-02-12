@@ -53,12 +53,12 @@ def _fit_image(pil_image, max_size):
 class DehazeApp:
     def __init__(self, root):
         self.root = root
-        self.root.title("Image Dehazing System")
+        self.root.title("图像去雾系统")
         self.root.geometry("1320x820")
         self.root.minsize(1100, 700)
 
         self.folder_var = tk.StringVar()
-        self.status_var = tk.StringVar(value="Ready. Choose an image folder first.")
+        self.status_var = tk.StringVar(value="就绪。请先选择图像文件夹。")
         self.images = []
         self.current_path = None
         self.current_image = None
@@ -176,12 +176,12 @@ class DehazeApp:
         header = ttk.Frame(self.root, style="Header.TFrame", padding=(18, 14))
         header.grid(row=0, column=0, sticky="ew")
         header.columnconfigure(0, weight=1)
-        ttk.Label(header, text="Image Dehazing", style="HeaderTitle.TLabel").grid(
+        ttk.Label(header, text="图像去雾", style="HeaderTitle.TLabel").grid(
             row=0, column=0, sticky="w"
         )
         ttk.Label(
             header,
-            text="Traditional dark channel prior + objective metric visualization",
+            text="传统暗通道先验 + 客观指标可视化",
             style="HeaderSub.TLabel",
         ).grid(row=1, column=0, sticky="w", pady=(2, 0))
 
@@ -190,8 +190,8 @@ class DehazeApp:
 
         self.work_tab = ttk.Frame(self.notebook, style="App.TFrame")
         self.metrics_tab = ttk.Frame(self.notebook, style="App.TFrame")
-        self.notebook.add(self.work_tab, text="Dehaze Workspace")
-        self.notebook.add(self.metrics_tab, text="Metrics")
+        self.notebook.add(self.work_tab, text="去雾工作区")
+        self.notebook.add(self.metrics_tab, text="指标")
 
         self._build_work_tab()
         self._build_metrics_tab()
@@ -208,12 +208,12 @@ class DehazeApp:
         main.rowconfigure(0, weight=1)
         main.columnconfigure(1, weight=1)
 
-        sidebar = ttk.LabelFrame(main, text="Image Source", style="Sidebar.TLabelframe")
+        sidebar = ttk.LabelFrame(main, text="图像来源", style="Sidebar.TLabelframe")
         sidebar.grid(row=0, column=0, sticky="nsw", padx=(0, 12))
         sidebar.columnconfigure(0, weight=1)
         sidebar.rowconfigure(3, weight=1)
 
-        ttk.Label(sidebar, text="Folder", style="FieldLabel.TLabel").grid(
+        ttk.Label(sidebar, text="文件夹", style="FieldLabel.TLabel").grid(
             row=0, column=0, sticky="w", padx=12, pady=(12, 4)
         )
         folder_row = ttk.Frame(sidebar, style="App.TFrame")
@@ -223,10 +223,10 @@ class DehazeApp:
         folder_entry = ttk.Entry(folder_row, textvariable=self.folder_var, style="Field.TEntry")
         folder_entry.grid(row=0, column=0, sticky="ew", padx=(0, 8))
         ttk.Button(
-            folder_row, text="Browse", style="Secondary.TButton", command=self.pick_folder
+            folder_row, text="浏览", style="Secondary.TButton", command=self.pick_folder
         ).grid(row=0, column=1, sticky="e")
 
-        ttk.Label(sidebar, text="Image List", style="FieldLabel.TLabel").grid(
+        ttk.Label(sidebar, text="图像列表", style="FieldLabel.TLabel").grid(
             row=2, column=0, sticky="w", padx=12, pady=(14, 6)
         )
         list_panel = tk.Frame(
@@ -261,7 +261,7 @@ class DehazeApp:
 
         ttk.Button(
             sidebar,
-            text="Load Selected",
+            text="加载选中",
             style="Secondary.TButton",
             command=self.load_selected,
         ).grid(row=4, column=0, sticky="ew", padx=12, pady=(10, 12))
@@ -275,27 +275,27 @@ class DehazeApp:
         self.input_label = self._build_preview_card(
             workspace,
             col=0,
-            title="Input Preview",
-            hint="Before dehazing",
-            empty_text="Load an image to preview input.",
+            title="输入预览",
+            hint="去雾前",
+            empty_text="加载图像以预览输入。",
             padx=(0, 8),
         )
         self.output_label = self._build_preview_card(
             workspace,
             col=1,
-            title="Output Preview",
-            hint="After dehazing",
-            empty_text="Click Dehaze to generate output.",
+            title="输出预览",
+            hint="去雾后",
+            empty_text="点击「执行去雾」以生成输出。",
             padx=(8, 0),
         )
 
         actions = ttk.Frame(self.work_tab, style="App.TFrame", padding=(0, 0, 0, 0))
         actions.grid(row=1, column=0, sticky="w")
         ttk.Button(
-            actions, text="Run Dehaze", style="Primary.TButton", command=self.run_dehaze
+            actions, text="执行去雾", style="Primary.TButton", command=self.run_dehaze
         ).grid(row=0, column=0, sticky="w")
         ttk.Button(
-            actions, text="Save Output", style="Secondary.TButton", command=self.save_output
+            actions, text="保存输出", style="Secondary.TButton", command=self.save_output
         ).grid(row=0, column=1, sticky="w", padx=(8, 0))
 
     def _build_metrics_tab(self):
@@ -313,11 +313,11 @@ class DehazeApp:
             style="Metric.Treeview",
             height=6,
         )
-        self.metric_tree.heading("metric", text="Metric")
-        self.metric_tree.heading("input", text="Input")
-        self.metric_tree.heading("output", text="Dehazed")
-        self.metric_tree.heading("delta", text="Delta")
-        self.metric_tree.heading("ratio", text="Improve %")
+        self.metric_tree.heading("metric", text="指标")
+        self.metric_tree.heading("input", text="输入")
+        self.metric_tree.heading("output", text="去雾后")
+        self.metric_tree.heading("delta", text="变化量")
+        self.metric_tree.heading("ratio", text="提升 %")
         self.metric_tree.column("metric", width=160, anchor="center")
         self.metric_tree.column("input", width=130, anchor="center")
         self.metric_tree.column("output", width=130, anchor="center")
@@ -327,7 +327,7 @@ class DehazeApp:
 
         ttk.Button(
             top,
-            text="Export Metric Charts",
+            text="导出指标图表",
             style="Secondary.TButton",
             command=self.export_metric_charts,
         ).grid(row=0, column=1, sticky="e", padx=(10, 0))
@@ -341,15 +341,15 @@ class DehazeApp:
         self.bar_card = self._build_chart_card(
             charts,
             col=0,
-            title="Grouped Bar Chart",
-            hint="Direct value comparison",
+            title="分组柱状图",
+            hint="数值直接对比",
             padx=(0, 8),
         )
         self.radar_card = self._build_chart_card(
             charts,
             col=1,
-            title="Radar Chart",
-            hint="Normalized profile comparison",
+            title="雷达图",
+            hint="归一化轮廓对比",
             padx=(8, 0),
         )
 
@@ -413,7 +413,7 @@ class DehazeApp:
 
         placeholder = tk.Label(
             content,
-            text="Run Dehaze to generate this chart.",
+            text="执行去雾以生成此图表。",
             bg="#ffffff",
             fg=COLORS["text_muted"],
             font=("Segoe UI", 10),
@@ -434,7 +434,7 @@ class DehazeApp:
 
     def load_folder(self, folder):
         if not os.path.isdir(folder):
-            messagebox.showerror("Error", "Invalid folder path.")
+            messagebox.showerror("错误", "无效的文件夹路径。")
             return
 
         self.images = []
@@ -442,7 +442,7 @@ class DehazeApp:
         try:
             names = sorted(os.listdir(folder))
         except OSError as exc:
-            messagebox.showerror("Error", str(exc))
+            messagebox.showerror("错误", str(exc))
             return
 
         for name in names:
@@ -462,14 +462,14 @@ class DehazeApp:
             self.clear_input()
             self.clear_output()
             self.clear_metrics()
-            self.set_status("No supported images found in this folder.")
+            self.set_status("此文件夹中未找到支持的图像。")
 
     def on_select(self, _event):
         self.load_selected()
 
     def load_selected(self):
         if not self.images:
-            messagebox.showinfo("Info", "No available images in this folder.")
+            messagebox.showinfo("提示", "此文件夹中没有可用图像。")
             return
         selection = self.listbox.curselection()
         if not selection:
@@ -479,7 +479,7 @@ class DehazeApp:
         path = os.path.join(self.folder_var.get(), name)
         image = _read_image(path)
         if image is None:
-            messagebox.showerror("Error", f"Failed to read image: {name}")
+            messagebox.showerror("错误", f"读取图像失败：{name}")
             return
 
         self.current_path = path
@@ -489,7 +489,7 @@ class DehazeApp:
         self.show_image(image, self.input_label, is_output=False)
         self.clear_output()
         self.clear_metrics()
-        self.set_status(f"Loaded: {name}")
+        self.set_status(f"已加载：{name}")
 
     def show_image(self, image_bgr, target_label, is_output):
         rgb = cv2.cvtColor(image_bgr, cv2.COLOR_BGR2RGB)
@@ -508,11 +508,11 @@ class DehazeApp:
             self.input_tk = tk_img
 
     def clear_input(self):
-        self.input_label.configure(image="", text="Load an image to preview input.")
+        self.input_label.configure(image="", text="加载图像以预览输入。")
         self.input_tk = None
 
     def clear_output(self):
-        self.output_label.configure(image="", text="Click Dehaze to generate output.")
+        self.output_label.configure(image="", text="点击「执行去雾」以生成输出。")
         self.output_tk = None
 
     def clear_metrics(self):
@@ -523,22 +523,22 @@ class DehazeApp:
 
     def run_dehaze(self):
         if self.current_image is None:
-            messagebox.showinfo("Info", "Please load an image first.")
+            messagebox.showinfo("提示", "请先加载图像。")
             return
-        self.set_status("Processing dehaze and metrics...")
+        self.set_status("正在处理去雾与指标…")
         try:
             output = dehaze_bgr(self.current_image)
             metrics_result = calculate_metrics(self.current_image, output)
         except Exception as exc:
-            messagebox.showerror("Error", str(exc))
-            self.set_status("Dehaze failed.")
+            messagebox.showerror("错误", str(exc))
+            self.set_status("去雾失败。")
             return
 
         self.output_image = output
         self.metrics_result = metrics_result
         self.show_image(output, self.output_label, is_output=True)
         self._update_metrics_tab()
-        self.set_status("Dehaze complete. Metrics generated in Metrics tab.")
+        self.set_status("去雾完成。指标已在「指标」标签页生成。")
 
     def _update_metrics_tab(self):
         self.clear_metrics()
@@ -570,7 +570,7 @@ class DehazeApp:
         if figure is None:
             placeholder = tk.Label(
                 parent,
-                text="Run Dehaze to generate this chart.",
+                text="执行去雾以生成此图表。",
                 bg="#ffffff",
                 fg=COLORS["text_muted"],
                 font=("Segoe UI", 10),
@@ -587,7 +587,7 @@ class DehazeApp:
 
     def save_output(self):
         if self.output_image is None:
-            messagebox.showinfo("Info", "There is no dehazed output to save.")
+            messagebox.showinfo("提示", "没有可保存的去雾输出。")
             return
 
         initial = None
@@ -598,10 +598,10 @@ class DehazeApp:
             defaultextension=".png",
             initialfile=initial,
             filetypes=[
-                ("PNG Image", "*.png"),
-                ("JPEG Image", "*.jpg;*.jpeg"),
-                ("BMP Image", "*.bmp"),
-                ("TIFF Image", "*.tif;*.tiff"),
+                ("PNG 图像", "*.png"),
+                ("JPEG 图像", "*.jpg;*.jpeg"),
+                ("BMP 图像", "*.bmp"),
+                ("TIFF 图像", "*.tif;*.tiff"),
             ],
         )
         if not path:
@@ -609,17 +609,17 @@ class DehazeApp:
         try:
             _write_image(path, self.output_image)
         except Exception as exc:
-            messagebox.showerror("Error", str(exc))
-            self.set_status("Save failed.")
+            messagebox.showerror("错误", str(exc))
+            self.set_status("保存失败。")
             return
-        self.set_status(f"Saved output: {os.path.basename(path)}")
+        self.set_status(f"已保存输出：{os.path.basename(path)}")
 
     def export_metric_charts(self):
         if self.metrics_result is None:
-            messagebox.showinfo("Info", "Run dehaze first to generate metric charts.")
+            messagebox.showinfo("提示", "请先执行去雾以生成指标图表。")
             return
 
-        folder = filedialog.askdirectory(title="Select folder to save charts")
+        folder = filedialog.askdirectory(title="选择保存图表的文件夹")
         if not folder:
             return
 
@@ -631,12 +631,12 @@ class DehazeApp:
                 self.metrics_result, folder, prefix=f"{prefix}_metrics"
             )
         except Exception as exc:
-            messagebox.showerror("Error", str(exc))
-            self.set_status("Metric chart export failed.")
+            messagebox.showerror("错误", str(exc))
+            self.set_status("指标图表导出失败。")
             return
 
         self.set_status(
-            f"Metric charts exported: {os.path.basename(bar_path)}, {os.path.basename(radar_path)}"
+            f"指标图表已导出：{os.path.basename(bar_path)}、{os.path.basename(radar_path)}"
         )
 
     def _on_root_resize(self, event):

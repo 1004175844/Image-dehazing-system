@@ -1,7 +1,12 @@
 import os
 
 import numpy as np
+import matplotlib
 from matplotlib.figure import Figure
+
+# 使图表中的中文正常显示（Windows 常用 SimHei / Microsoft YaHei）
+matplotlib.rcParams["font.sans-serif"] = ["Microsoft YaHei", "SimHei", "SimSun", "DejaVu Sans"]
+matplotlib.rcParams["axes.unicode_minus"] = False
 
 
 def _extract_series(metrics_result):
@@ -19,11 +24,11 @@ def build_bar_figure(metrics_result):
 
     fig = Figure(figsize=(6.6, 4.2), dpi=110)
     ax = fig.add_subplot(111)
-    ax.bar(x - width / 2, input_values, width=width, label="Input", color="#94a3b8")
-    ax.bar(x + width / 2, output_values, width=width, label="Dehazed", color="#2563eb")
+    ax.bar(x - width / 2, input_values, width=width, label="输入", color="#94a3b8")
+    ax.bar(x + width / 2, output_values, width=width, label="去雾后", color="#2563eb")
     ax.set_xticks(x)
     ax.set_xticklabels(names, rotation=10)
-    ax.set_title("Metric Comparison")
+    ax.set_title("指标对比")
     ax.grid(axis="y", alpha=0.25)
     ax.legend(frameon=False)
     fig.tight_layout()
@@ -45,13 +50,13 @@ def build_radar_figure(metrics_result):
 
     fig = Figure(figsize=(6.6, 4.2), dpi=110)
     ax = fig.add_subplot(111, polar=True)
-    ax.plot(angles, in_norm, color="#64748b", linewidth=2, label="Input")
+    ax.plot(angles, in_norm, color="#64748b", linewidth=2, label="输入")
     ax.fill(angles, in_norm, color="#cbd5e1", alpha=0.35)
-    ax.plot(angles, out_norm, color="#1d4ed8", linewidth=2, label="Dehazed")
+    ax.plot(angles, out_norm, color="#1d4ed8", linewidth=2, label="去雾后")
     ax.fill(angles, out_norm, color="#93c5fd", alpha=0.35)
     ax.set_ylim(0, 1.05)
     ax.set_thetagrids(np.degrees(angles[:-1]), labels=names)
-    ax.set_title("Normalized Metric Radar")
+    ax.set_title("归一化指标雷达图")
     ax.legend(loc="upper right", bbox_to_anchor=(1.22, 1.15), frameon=False)
     fig.tight_layout()
     return fig
