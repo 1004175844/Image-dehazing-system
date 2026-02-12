@@ -9,7 +9,14 @@ from PIL import Image, ImageTk
 
 from dehaze import dehaze_bgr
 from metrics import calculate_metrics
-from metrics_viz import build_bar_figure, build_radar_figure, save_metric_figures
+from metrics_viz import (
+    build_bar_figure,
+    build_radar_figure,
+    build_rgb_hist_figure,
+    build_gradient_hist_figure,
+    build_saturation_hist_figure,
+    save_metric_figures,
+)
 
 
 IMAGE_EXTS = {".jpg", ".jpeg", ".png", ".bmp", ".tif", ".tiff", ".webp"}
@@ -68,8 +75,12 @@ class DehazeApp:
         self.input_tk = None
         self.output_tk = None
         self._resize_job = None
+        self.rgb_hist_canvas = None
+        self.gradient_hist_canvas = None
+        self.saturation_hist_canvas = None
         self.bar_canvas = None
         self.radar_canvas = None
+        self.detail_visible = False
 
         self._build_style()
         self._build_ui()
@@ -299,15 +310,31 @@ class DehazeApp:
         ).grid(row=0, column=1, sticky="w", padx=(8, 0))
 
     def _build_metrics_tab(self):
-        self.metrics_tab.rowconfigure(1, weight=1)
+        self.metrics_tab.rowconfigure(2, weight=1)
         self.metrics_tab.columnconfigure(0, weight=1)
 
-        top = ttk.Frame(self.metrics_tab, style="App.TFrame", padding=(0, 0, 0, 8))
+        top = ttk.Frame(self.metrics_tab, style="App.TFrame", padding=(0, 0, 0, 6))
         top.grid(row=0, column=0, sticky="ew")
         top.columnconfigure(0, weight=1)
-
-        self.metric_tree = ttk.Treeview(
+        ttk.Button(
             top,
+            text="导出图表",
+            style="Secondary.TButton",
+            command=self.export_metric_charts,
+        ).grid(row=0, column=0, sticky="w")
+        self.detail_btn = ttk.Button(
+            top,
+            text="详情",
+            style="Secondary.TButton",
+            command=self._toggle_detail,
+        )
+        self.detail_btn.grid(row=0, column=1, sticky="w", padx=(8, 0))
+
+        self.detail_frame = ttk.Frame(self.metrics_tab, style="App.TFrame", padding=(0, 4, 0, 8))
+        self.detail_frame.grid(row=1, column=0, sticky="ew")
+        self.detail_frame.columnconfigure(0, weight=1)
+        self.metric_tree = ttk.Treeview(
+            self.detail_frame,
             columns=("metric", "input", "output", "delta", "ratio"),
             show="headings",
             style="Metric.Treeview",
@@ -324,34 +351,21 @@ class DehazeApp:
         self.metric_tree.column("delta", width=130, anchor="center")
         self.metric_tree.column("ratio", width=130, anchor="center")
         self.metric_tree.grid(row=0, column=0, sticky="ew")
+        self.detail_frame.grid_remove()
 
-        ttk.Button(
-            top,
-            text="导出指标图表",
-            style="Secondary.TButton",
-            command=self.export_metric_charts,
-        ).grid(row=0, column=1, sticky="e", padx=(10, 0))
-
-        charts = ttk.Frame(self.metrics_tab, style="App.TFrame")
-        charts.grid(row=1, column=0, sticky="nsew")
+        charts = ttk.Frame(self.metrics_tab, style="App.TFrame", padding=(0, 4, 0, 8))
+        charts.grid(row=2, column=0, sticky="nsew")
         charts.rowconfigure(0, weight=1)
+        charts.rowconfigure(1, weight=1)
         charts.columnconfigure(0, weight=1)
         charts.columnconfigure(1, weight=1)
+        charts.columnconfigure(2, weight=1)
 
-        self.bar_card = self._build_chart_card(
-            charts,
-            col=0,
-            title="分组柱状图",
-            hint="数值直接对比",
-            padx=(0, 8),
-        )
-        self.radar_card = self._build_chart_card(
-            charts,
-            col=1,
-            title="雷达图",
-            hint="归一化轮廓对比",
-            padx=(8, 0),
-        )
+        self.rgb_hist_card = self._build_chart_card_at(charts, 0, 0, "RGB 亮度分布", padx=(0, 6), pady=(0, 6))
+        self.gradient_hist_card = self._build_chart_card_at(charts, 0, 1, "梯度幅值分布", padx=(3, 3), pady=(0, 6))
+        self.saturation_hist_card = self._build_chart_card_at(charts, 0, 2, "饱和度分布", padx=(6, 0), pady=(0, 6))
+        self.radar_card = self._build_chart_card_at(charts, 1, 0, "指标雷达图", padx=(0, 6), pady=(6, 0))
+        self.bar_card = self._build_chart_card_at(charts, 1, 1, "无参考指标对比", padx=(3, 0), pady=(6, 0), columnspan=2)
 
     def _build_preview_card(self, parent, col, title, hint, empty_text, padx):
         card = ttk.Frame(parent, style="Card.TFrame", padding=10)
@@ -388,9 +402,9 @@ class DehazeApp:
         label.grid(row=0, column=0, sticky="nsew", padx=10, pady=10)
         return label
 
-    def _build_chart_card(self, parent, col, title, hint, padx):
+    def _build_chart_card_at(self, parent, row, col, title, padx=(0, 0), pady=(0, 0), columnspan=1):
         card = ttk.Frame(parent, style="Card.TFrame", padding=10)
-        card.grid(row=0, column=col, sticky="nsew", padx=padx)
+        card.grid(row=row, column=col, columnspan=columnspan, sticky="nsew", padx=padx, pady=pady)
         card.rowconfigure(1, weight=1)
         card.columnconfigure(0, weight=1)
 
@@ -398,7 +412,6 @@ class DehazeApp:
         header.grid(row=0, column=0, sticky="ew")
         header.columnconfigure(0, weight=1)
         ttk.Label(header, text=title, style="CardTitle.TLabel").grid(row=0, column=0, sticky="w")
-        ttk.Label(header, text=hint, style="CardHint.TLabel").grid(row=0, column=1, sticky="e")
 
         content = tk.Frame(
             card,
@@ -420,6 +433,15 @@ class DehazeApp:
         )
         placeholder.grid(row=0, column=0, sticky="nsew", padx=10, pady=10)
         return content
+
+    def _toggle_detail(self):
+        self.detail_visible = not self.detail_visible
+        if self.detail_visible:
+            self.detail_frame.grid()
+            self.detail_btn.configure(text="收起详情")
+        else:
+            self.detail_frame.grid_remove()
+            self.detail_btn.configure(text="详情")
 
     def set_status(self, text):
         self.status_var.set(text)
@@ -518,8 +540,14 @@ class DehazeApp:
     def clear_metrics(self):
         for item in self.metric_tree.get_children():
             self.metric_tree.delete(item)
-        self._render_chart(self.bar_card, None, "bar_canvas")
-        self._render_chart(self.radar_card, None, "radar_canvas")
+        for card, attr in [
+            (self.rgb_hist_card, "rgb_hist_canvas"),
+            (self.gradient_hist_card, "gradient_hist_canvas"),
+            (self.saturation_hist_card, "saturation_hist_canvas"),
+            (self.bar_card, "bar_canvas"),
+            (self.radar_card, "radar_canvas"),
+        ]:
+            self._render_chart(card, None, attr)
 
     def run_dehaze(self):
         if self.current_image is None:
@@ -542,7 +570,27 @@ class DehazeApp:
 
     def _update_metrics_tab(self):
         self.clear_metrics()
-        rows = self.metrics_result.get("metrics", [])
+        rows = list(self.metrics_result.get("metrics", []))
+        if "brisque_input" in self.metrics_result:
+            bi = self.metrics_result["brisque_input"]
+            bo = self.metrics_result["brisque_output"]
+            rows.append({
+                "name": "BRISQUE",
+                "input": bi,
+                "output": bo,
+                "delta": bo - bi,
+                "improve_ratio": ((bo - bi) / (abs(bi) + 1e-12)) * 100.0,
+            })
+        if "niqe_input" in self.metrics_result:
+            ni = self.metrics_result["niqe_input"]
+            no = self.metrics_result["niqe_output"]
+            rows.append({
+                "name": "NIQE",
+                "input": ni,
+                "output": no,
+                "delta": no - ni,
+                "improve_ratio": ((no - ni) / (abs(ni) + 1e-12)) * 100.0,
+            })
         for row in rows:
             self.metric_tree.insert(
                 "",
@@ -556,6 +604,12 @@ class DehazeApp:
                 ),
             )
 
+        inp = self.current_image
+        out = self.output_image
+        if inp is not None and out is not None:
+            self._render_chart(self.rgb_hist_card, build_rgb_hist_figure(inp, out), "rgb_hist_canvas")
+            self._render_chart(self.gradient_hist_card, build_gradient_hist_figure(inp, out), "gradient_hist_canvas")
+            self._render_chart(self.saturation_hist_card, build_saturation_hist_figure(inp, out), "saturation_hist_canvas")
         bar_fig = build_bar_figure(self.metrics_result)
         radar_fig = build_radar_figure(self.metrics_result)
         self._render_chart(self.bar_card, bar_fig, "bar_canvas")
@@ -627,17 +681,19 @@ class DehazeApp:
         if self.current_path:
             prefix = os.path.splitext(os.path.basename(self.current_path))[0]
         try:
-            bar_path, radar_path = save_metric_figures(
-                self.metrics_result, folder, prefix=f"{prefix}_metrics"
+            paths = save_metric_figures(
+                self.metrics_result,
+                folder,
+                prefix=f"{prefix}_metrics",
+                input_bgr=self.current_image,
+                output_bgr=self.output_image,
             )
         except Exception as exc:
             messagebox.showerror("错误", str(exc))
             self.set_status("指标图表导出失败。")
             return
 
-        self.set_status(
-            f"指标图表已导出：{os.path.basename(bar_path)}、{os.path.basename(radar_path)}"
-        )
+        self.set_status(f"已导出 {len(paths)} 张图表至：{folder}")
 
     def _on_root_resize(self, event):
         if event.widget is not self.root:

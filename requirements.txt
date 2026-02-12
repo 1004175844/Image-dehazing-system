@@ -2,3 +2,6 @@ numpy
 opencv-python
 pillow
 matplotlib
+# 可选：用于 NIQE/BRISQUE 无参考指标（不安装则仅使用清晰度/对比度/熵等指标）
+# torch
+# piq

@@ -1,3 +1,7 @@
+"""
+无参考图像质量指标（适用于去雾等任务）。
+包含清晰度/对比度/熵、以及可选的 NIQE/BRISQUE（需安装 piq, torch）。
+"""
 import cv2
 import numpy as np
 
@@ -8,13 +12,52 @@ METRIC_ORDER = (
     "Entropy",
     "RMS Contrast",
 )
-# 界面显示用中文名
 METRIC_DISPLAY = {
     "Tenengrad": "特南格拉斯梯度",
     "Laplacian Var": "拉普拉斯方差",
     "Entropy": "熵",
     "RMS Contrast": "RMS 对比度",
 }
+
+# 可选：NIQE / BRISQUE（需 piq + torch）
+_has_piq = False
+try:
+    import torch
+    import piq
+    _has_piq = True
+except ImportError:
+    pass
+
+
+def _bgr_to_rgb_tensor_01(bgr):
+    """BGR (H,W,3) uint8 -> RGB (1,3,H,W) float [0,1]."""
+    rgb = cv2.cvtColor(bgr, cv2.COLOR_BGR2RGB)
+    x = torch.from_numpy(rgb).permute(2, 0, 1).unsqueeze(0).float() / 255.0
+    return x
+
+
+def _compute_brisque(bgr):
+    if not _has_piq:
+        return None
+    try:
+        x = _bgr_to_rgb_tensor_01(bgr)
+        score = piq.brisque(x, data_range=1.0, reduction="mean")
+        return float(score.item())
+    except Exception:
+        return None
+
+
+def _compute_niqe(bgr):
+    if not _has_piq:
+        return None
+    try:
+        if not hasattr(piq, "niqe"):
+            return None
+        x = _bgr_to_rgb_tensor_01(bgr)
+        score = piq.niqe(x, data_range=1.0, reduction="mean")
+        return float(score.item())
+    except Exception:
+        return None
 
 
 def _validate_images(input_bgr, output_bgr):
@@ -92,5 +135,18 @@ def calculate_metrics(input_bgr, output_bgr):
             }
         )
 
-    return {"metrics": rows}
+    result = {"metrics": rows}
 
+    # 可选无参考指标（BRISQUE 越低越好；NIQE 若存在则越低越好）
+    brisque_in = _compute_brisque(input_bgr)
+    brisque_out = _compute_brisque(output_bgr)
+    niqe_in = _compute_niqe(input_bgr)
+    niqe_out = _compute_niqe(output_bgr)
+    if brisque_in is not None:
+        result["brisque_input"] = brisque_in
+        result["brisque_output"] = brisque_out
+    if niqe_in is not None:
+        result["niqe_input"] = niqe_in
+        result["niqe_output"] = niqe_out
+
+    return result
